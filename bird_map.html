@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYC Rare Bird Alert Map</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #1e3c72;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            font-size: 2em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1em;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .sidebar {
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            padding-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .bird-list {
+            list-style: none;
+        }
+
+        .bird-item {
+            background: white;
+            border-left: 3px solid #1e3c72;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .bird-item:hover {
+            background: #f8f9fa;
+            border-left-color: #2a5298;
+        }
+
+        .bird-name {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .bird-location {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 3px;
+        }
+
+        .bird-date {
+            color: #95a5a6;
+            font-size: 0.85em;
+        }
+
+        .bird-count {
+            display: inline-block;
+            background: #1e3c72;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .map-container {
+        }
+
+        #map {
+            height: 660px;
+        }
+
+        .filter-section {
+            margin-bottom: 20px;
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #7f8c8d;
+        }
+
+        .custom-popup {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .popup-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .popup-detail {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .popup-label {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* Custom scrollbar */
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #1e3c72;
+            border-radius: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #2a5298;
+        }
+
+        @media (max-width: 968px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .stats-container {
+                gap: 15px;
+            }
+
+            .stat-box {
+                padding: 10px 20px;
+            }
+        }
+
+        .legend {
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            line-height: 1.5;
+        }
+
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .legend-item {
+            margin: 3px 0;
+            font-size: 0.9em;
+        }
+
+        .refresh-btn {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            margin-top: 10px;
+            width: 100%;
+            transition: background 0.2s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #2a5298;
+        }
+
+        .history-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .history-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .timeline-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #1e3c72;
+        }
+
+        .timeline-date {
+            font-weight: bold;
+            color: #1e3c72;
+            font-size: 0.95em;
+        }
+
+        .timeline-stats {
+            font-size: 0.85em;
+            color: #555;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>NYC Rare Bird Alert</h1>
+        <p>Live tracking of rare and notable bird sightings across New York City</p>
+    </div>
+
+    <div class="container">
+        <div class="content-wrapper">
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+
+            <div class="sidebar">
+                <h2>Recent Sightings</h2>
+                <div class="filter-section">
+                    <input
+                        type="text"
+                        class="filter-input"
+                        id="search-input"
+                        placeholder="Search by species or location..."
+                    >
+                </div>
+                <div class="filter-section">
+                    <label for="date-range" style="font-size: 0.9em; color: #555; margin-bottom: 5px; display: block;">Filter by Date:</label>
+                    <select class="filter-input" id="date-range" onchange="filterByDateRange()">
+                        <option value="all">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="week">Last 7 Days</option>
+                        <option value="month">Last 30 Days</option>
+                    </select>
+                </div>
+                <button class="refresh-btn" onclick="loadData()">Refresh Data</button>
+                <button class="refresh-btn" onclick="loadAllHistory()" style="background: #28a745; margin-top: 5px;">Load All History</button>
+                <div class="history-section" id="timeline-section" style="display: none;">
+                    <div class="history-title">Daily Timeline</div>
+                    <div id="timeline-container"></div>
+                </div>
+                <div id="bird-list-container" class="loading">
+                    Loading bird data...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        let map;
+        let markers = [];
+        let allBirdData = [];
+        let historicalData = []; // Store all historical data with dates
+
+        // Initialize map
+        function initMap() {
+            // Center on New York City
+            map = L.map('map').setView([40.7128, -73.9352], 10);
+
+            // Add tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18
+            }).addTo(map);
+
+            // Add legend
+            const legend = L.control({position: 'bottomright'});
+            legend.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'legend');
+                div.innerHTML = `
+                    <div class="legend-title">Map Legend</div>
+                    <div class="legend-item">• Rare Bird Sighting</div>
+                    <div class="legend-item">• Click markers for details</div>
+                    <div class="legend-item">• Zoom in/out with scroll</div>
+                `;
+                return div;
+            };
+            legend.addTo(map);
+        }
+
+        // Filter for NYC only (5 boroughs)
+        function filterNYCOnly(data) {
+            const nycKeywords = [
+                'manhattan', 'queens', 'brooklyn', 'bronx', 'staten island',
+                'central park', 'prospect park', 'inwood', 'harlem', 'jamaica bay',
+                'forest park', 'flushing', 'coney island', 'rockaway', 'battery park',
+                'riverside park', 'fort tryon', 'pelham bay', 'van cortlandt',
+                'floyd bennett', 'governors island', 'randalls island', 'east river',
+                'hudson river park', 'tompkins square', 'washington square',
+                'highbridge park', 'morningside park', 'stuyvesant', 'gramercy'
+            ];
+
+            return data.filter(bird => {
+                const location = (bird.locName || '').toLowerCase();
+                return nycKeywords.some(keyword => location.includes(keyword));
+            });
+        }
+
+        // Load bird data from JSON file
+        async function loadData() {
+            try {
+                // Load the most recent JSON file
+                const response = await fetch('ny_rare_birds_20260128_124623.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load data');
+                }
+                const allData = await response.json();
+                const nycData = filterNYCOnly(allData);
+                console.log(`Filtered ${allData.length} birds to ${nycData.length} NYC birds`);
+                allBirdData = nycData;
+                updateStats(nycData);
+                displayBirdList(nycData);
+                addMarkersToMap(nycData);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('bird-list-container').innerHTML = `
+                    <div class="loading">
+                        <p>Unable to load bird data.</p>
+                        <p style="margin-top: 10px; font-size: 0.9em;">
+                            Make sure you're running: <strong>python -m http.server 8000</strong><br>
+                            Then visit: <strong>http://localhost:8000/bird_map.html</strong>
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        // Update statistics
+        function updateStats(data) {
+            const totalSightings = data.length;
+            const uniqueSpecies = new Set(data.map(bird => bird.comName)).size;
+            const now = new Date().toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            document.getElementById('total-sightings').textContent = totalSightings;
+            document.getElementById('unique-species').textContent = uniqueSpecies;
+            document.getElementById('last-updated').textContent = now;
+        }
+
+        // Display bird list in sidebar
+        function displayBirdList(data) {
+            const container = document.getElementById('bird-list-container');
+
+            if (data.length === 0) {
+                container.innerHTML = '<div class="loading">No bird sightings found.</div>';
+                return;
+            }
+
+            const html = data.map((bird, index) => `
+                <div class="bird-item" onclick="focusBird(${index})">
+                    <div class="bird-name">
+                        ${bird.comName || 'Unknown Species'}
+                        <span class="bird-count">${bird.howMany || '?'} seen</span>
+                    </div>
+                    <div class="bird-location">Location: ${bird.locName || 'Unknown location'}</div>
+                    <div class="bird-date">Date: ${bird.obsDt || 'Unknown date'}</div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `<ul class="bird-list">${html}</ul>`;
+        }
+
+        // Add markers to map
+        function addMarkersToMap(data) {
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            data.forEach((bird, index) => {
+                if (bird.lat && bird.lng) {
+                    // Custom red marker
+                    const redIcon = L.divIcon({
+                        className: 'custom-marker',
+                        html: '<div style="background-color: #e74c3c; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    });
+
+                    const marker = L.marker([bird.lat, bird.lng], { icon: redIcon })
+                        .addTo(map);
+
+                    const popupContent = `
+                        <div class="custom-popup">
+                            <div class="popup-title">${bird.comName || 'Unknown Species'}</div>
+                            <div class="popup-detail">
+                                <span class="popup-label">Scientific Name:</span> ${bird.sciName || 'N/A'}
+                            </div>
+                            <div class="popup-detail">
+                                <span class="popup-label">Location:</span> ${bird.locName || 'Unknown'}
+                            </div>
+                            <div class="popup-detail">
+                                <span class="popup-label">Count:</span> ${bird.howMany || '?'} individual(s)
+                            </div>
+                            <div class="popup-detail">
+                                <span class="popup-label">Date/Time:</span> ${bird.obsDt || 'Unknown'}
+                            </div>
+                            <div class="popup-detail">
+                                <span class="popup-label">Coordinates:</span> ${bird.lat.toFixed(4)}, ${bird.lng.toFixed(4)}
+                            </div>
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupContent);
+                    markers.push(marker);
+                    marker.birdIndex = index;
+                }
+            });
+        }
+
+        // Focus on a specific bird
+        function focusBird(index) {
+            const bird = allBirdData[index];
+            if (bird.lat && bird.lng) {
+                map.setView([bird.lat, bird.lng], 12);
+                const marker = markers.find(m => m.birdIndex === index);
+                if (marker) {
+                    marker.openPopup();
+                }
+            }
+        }
+
+        // Search/filter functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredData = allBirdData.filter(bird => {
+                    const species = (bird.comName || '').toLowerCase();
+                    const location = (bird.locName || '').toLowerCase();
+                    return species.includes(searchTerm) || location.includes(searchTerm);
+                });
+                displayBirdList(filteredData);
+                addMarkersToMap(filteredData);
+            });
+        });
+
+        // Load all historical data
+        async function loadAllHistory() {
+            const filePatterns = [
+                'ny_rare_birds_20260128_124623.json',
+                'ny_rare_birds_20260128_034246.json',
+                'ny_rare_birds_20260128_033831.json',
+                'ny_rare_birds_20260128_033813.json',
+                'ny_rare_birds_20260128_033610.json',
+                'ny_rare_birds_20260128_032010.json',
+                'ny_rare_birds_20260128_031927.json',
+                'ebird_observations_20260128_031627.json'
+            ];
+
+            historicalData = [];
+            let loadedCount = 0;
+
+            for (const file of filePatterns) {
+                try {
+                    const response = await fetch(file);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const nycData = filterNYCOnly(data);
+                        historicalData = historicalData.concat(nycData);
+                        loadedCount++;
+                    }
+                } catch (error) {
+                    console.log(`Could not load ${file}:`, error);
+                }
+            }
+
+            if (loadedCount > 0) {
+                // Remove duplicates based on subId
+                const uniqueData = [];
+                const seen = new Set();
+                for (const bird of historicalData) {
+                    if (!seen.has(bird.subId)) {
+                        seen.add(bird.subId);
+                        uniqueData.push(bird);
+                    }
+                }
+                historicalData = uniqueData;
+
+                // Sort by date (most recent first)
+                historicalData.sort((a, b) => {
+                    return new Date(b.obsDt) - new Date(a.obsDt);
+                });
+
+                allBirdData = historicalData;
+                updateStats(historicalData);
+                displayBirdList(historicalData);
+                addMarkersToMap(historicalData);
+                displayTimeline(historicalData);
+
+                alert(`Loaded ${loadedCount} files with ${historicalData.length} unique NYC bird sightings!`);
+            } else {
+                alert('No historical data files found. Make sure JSON files are in the same directory.');
+            }
+        }
+
+        // Display timeline of daily sightings
+        function displayTimeline(data) {
+            const timelineSection = document.getElementById('timeline-section');
+            const timelineContainer = document.getElementById('timeline-container');
+
+            // Group birds by date
+            const byDate = {};
+            data.forEach(bird => {
+                const date = bird.obsDt.split(' ')[0]; // Get just the date part
+                if (!byDate[date]) {
+                    byDate[date] = [];
+                }
+                byDate[date].push(bird);
+            });
+
+            // Sort dates (most recent first)
+            const sortedDates = Object.keys(byDate).sort((a, b) => new Date(b) - new Date(a));
+
+            // Display timeline
+            let html = '';
+            sortedDates.slice(0, 10).forEach(date => {
+                const birds = byDate[date];
+                const uniqueSpecies = new Set(birds.map(b => b.comName)).size;
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-date">${date}</div>
+                        <div class="timeline-stats">
+                            ${birds.length} sightings • ${uniqueSpecies} species
+                        </div>
+                    </div>
+                `;
+            });
+
+            timelineContainer.innerHTML = html;
+            timelineSection.style.display = 'block';
+        }
+
+        // Filter by date range
+        function filterByDateRange() {
+            const range = document.getElementById('date-range').value;
+            const now = new Date();
+            let filteredData = historicalData.length > 0 ? historicalData : allBirdData;
+
+            if (range === 'all') {
+                allBirdData = filteredData;
+            } else {
+                const cutoffDate = new Date();
+
+                if (range === 'today') {
+                    cutoffDate.setHours(0, 0, 0, 0);
+                } else if (range === 'yesterday') {
+                    cutoffDate.setDate(cutoffDate.getDate() - 1);
+                    cutoffDate.setHours(0, 0, 0, 0);
+                } else if (range === 'week') {
+                    cutoffDate.setDate(cutoffDate.getDate() - 7);
+                } else if (range === 'month') {
+                    cutoffDate.setDate(cutoffDate.getDate() - 30);
+                }
+
+                allBirdData = filteredData.filter(bird => {
+                    const birdDate = new Date(bird.obsDt);
+                    if (range === 'yesterday') {
+                        const nextDay = new Date(cutoffDate);
+                        nextDay.setDate(nextDay.getDate() + 1);
+                        return birdDate >= cutoffDate && birdDate < nextDay;
+                    }
+                    return birdDate >= cutoffDate;
+                });
+            }
+
+            updateStats(allBirdData);
+            displayBirdList(allBirdData);
+            addMarkersToMap(allBirdData);
+        }
+
+        // Initialize when page loads
+        window.onload = function() {
+            initMap();
+            loadData();
+        };
+    </script>
+</body>
+</html>
