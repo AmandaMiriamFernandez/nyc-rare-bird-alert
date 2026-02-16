@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Grading the Groundhogs: Who's Actually Good at Predicting the Weather?</title>
+
+    <!-- Google fonts -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-size: 20px;
+            font-family: Georgia, 'Times New Roman', Times, serif;
+            text-rendering: optimizeLegibility;
+            background: #fafaf7;
+            color: #2b2b2b;
+        }
+
+        .content {
+            max-width: 640px;
+            margin: auto;
+        }
+
+        .header {
+            padding: 3em 0 1em;
+        }
+
+        a {
+            color: #5a7d3a;
+        }
+
+        a:hover {
+            color: #3d5a25;
+        }
+
+        .footer {
+            background: #3d2b1f;
+            color: #d4c5b0;
+            text-align: center;
+            font-size: 0.8em;
+            margin-top: 4em;
+            padding: 4em 0;
+        }
+
+        .footer a {
+            color: #a8c97a;
+        }
+
+        figure {
+            margin: 0;
+            padding-bottom: 1.2em;
+        }
+
+        figcaption {
+            font-size: 0.8em;
+            text-align: center;
+            margin-top: 0.5em;
+            color: #666;
+        }
+
+        h1 {
+            font-family: 'Lora', Georgia, serif;
+            font-weight: bold;
+            font-size: 2.8em;
+            line-height: 1.1;
+            color: #3d2b1f;
+        }
+
+        h2 {
+            font-family: 'Lora', Georgia, serif;
+            font-weight: bold;
+            font-size: 1.5em;
+            color: #3d2b1f;
+            margin-top: 2em;
+            margin-bottom: 0.5em;
+        }
+
+        .subhead {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 1.2em;
+            color: #5a5a5a;
+        }
+
+        iframe,
+        img,
+        video {
+            max-width: 100%;
+        }
+
+        p {
+            line-height: 1.6;
+            margin: 0;
+            padding-bottom: 1.2em;
+        }
+
+        ul {
+            margin: 0;
+            padding-bottom: 1em;
+            line-height: 1.6;
+        }
+
+        iframe {
+            padding-bottom: 1.2em;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            background: #fffbaf;
+            font-size: 0.85em;
+        }
+
+        .full-width figure {
+            text-align: center;
+        }
+
+        /* Groundhog ranking table */
+        .groundhog-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5em 0;
+            font-size: 0.9em;
+        }
+
+        .groundhog-table thead {
+            background: #3d2b1f;
+            color: #fff;
+        }
+
+        .groundhog-table th {
+            padding: 0.8em 0.6em;
+            text-align: left;
+            font-family: 'Lora', Georgia, serif;
+            font-size: 0.85em;
+            letter-spacing: 0.03em;
+        }
+
+        .groundhog-table td {
+            padding: 0.7em 0.6em;
+            border-bottom: 1px solid #e0dbd3;
+        }
+
+        .groundhog-table tr:hover {
+            background: #f0ebe3;
+        }
+
+        .groundhog-table .rank {
+            font-weight: bold;
+            color: #888;
+            width: 2em;
+            text-align: center;
+        }
+
+        .groundhog-table .name {
+            font-weight: bold;
+            color: #3d2b1f;
+        }
+
+        .groundhog-table .species {
+            color: #777;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+
+        .groundhog-table .state {
+            text-align: center;
+        }
+
+        .groundhog-table .accuracy {
+            text-align: right;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        /* Accuracy bar chart */
+        .bar-chart {
+            margin: 2em 0;
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5em;
+        }
+
+        .bar-label {
+            width: 180px;
+            text-align: right;
+            padding-right: 12px;
+            font-size: 0.8em;
+            color: #3d2b1f;
+            flex-shrink: 0;
+        }
+
+        .bar-container {
+            flex: 1;
+            background: #e8e3da;
+            border-radius: 3px;
+            height: 28px;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 0.75em;
+            font-weight: bold;
+            color: #fff;
+            min-width: 3em;
+        }
+
+        .bar-fill.high {
+            background: linear-gradient(90deg, #6a9f3a, #5a8a2e);
+        }
+
+        .bar-fill.mid {
+            background: linear-gradient(90deg, #c4a835, #b89a2a);
+        }
+
+        .bar-fill.low {
+            background: linear-gradient(90deg, #c46a3a, #a8522e);
+        }
+
+        /* Highlight card */
+        .highlight-card {
+            background: #fff;
+            border: 2px solid #d4c5b0;
+            border-radius: 8px;
+            padding: 1.5em;
+            margin: 1.5em 0;
+            text-align: center;
+        }
+
+        .highlight-card .emoji {
+            font-size: 3em;
+            margin-bottom: 0.2em;
+        }
+
+        .highlight-card .stat {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #3d2b1f;
+        }
+
+        .highlight-card .label {
+            font-size: 0.9em;
+            color: #777;
+            margin-top: 0.3em;
+        }
+
+        .highlight-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1em;
+            margin: 1.5em 0;
+        }
+
+        .highlight-grid .highlight-card {
+            margin: 0;
+        }
+
+        /* Phil callout */
+        .callout {
+            background: #fff3e0;
+            border-left: 4px solid #c46a3a;
+            padding: 1.2em 1.5em;
+            margin: 1.5em 0;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .callout p {
+            padding-bottom: 0;
+            margin: 0;
+        }
+
+        .callout .callout-title {
+            font-family: 'Lora', Georgia, serif;
+            font-weight: bold;
+            color: #c46a3a;
+            margin-bottom: 0.4em;
+        }
+
+        .byline {
+            color: #777;
+            font-size: 0.9em;
+        }
+
+        /* margin on mobile */
+        @media (max-width: 640px) {
+            body {
+                font-size: 18px;
+            }
+
+            .content {
+                padding-left: 0.5em;
+                padding-right: 0.5em;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .bar-label {
+                width: 110px;
+                font-size: 0.7em;
+            }
+
+            .highlight-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .groundhog-table {
+                font-size: 0.78em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <div class="header">
+            <h1>Grading the Groundhogs: Who's Actually Good at Predicting the Weather?</h1>
+            <p class="subhead">Punxsutawney Phil may be the most famous, but NOAA data shows he's one of the worst forecasters in the bunch.</p>
+        </div>
+        <div class="byline">
+            <p>By Amanda Fernandez</p>
+        </div>
+
+        <p>Every February 2nd, millions of Americans tune in to watch Punxsutawney Phil emerge from his burrow. But when NOAA ranked 19 weather-predicting groundhogs based on their accuracy over the past 20 years, Phil didn't exactly shine.</p>
+
+        <p>Using March temperature averages for the U.S., NOAA graded each groundhog's predictions to see who's actually worth listening to. The results? The most famous groundhog is nearly the least accurate.</p>
+
+        <h2>The Full Rankings</h2>
+
+        <p>The bars show each forecaster's accuracy rate -green is good, yellow is middling, and red means you'd be better off flipping a coin.</p>
+
+        <iframe title="Groundhog Prediction Accuracy" aria-label="Bar Chart" id="datawrapper-chart-wkFcm" src="https://datawrapper.dwcdn.net/wkFcm/5/" scrolling="no" frameborder="0" style="width: 0; min-width: 100% !important; border: none;" height="757" data-external="1"></iframe>
+        <script type="text/javascript">!function(){window.addEventListener("message",function(a){if(void 0!==a.data["datawrapper-height"]){var e=document.querySelectorAll("iframe");for(var t in a.data["datawrapper-height"])for(var r,i=0;r=e[i];i++)if(r.contentWindow===a.source){var d=a.data["datawrapper-height"][t]+"px";r.style.height=d}}})}();</script>
+
+        <div class="callout">
+            <div class="callout-title">What about Phil?</div>
+            <p>Punxsutawney Phil, the nation's most celebrated groundhog, ranks 17th out of 19 with a <strong>35% accuracy rate</strong>. That means he gets it wrong about two out of every three years. Even taxidermied groundhogs like Poor Richard (50%) and Uni the Groundhog (47.37%) have better accuracy than Phil.</p>
+        </div>
+
+        <table class="groundhog-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Species</th>
+                    <th>State</th>
+                    <th style="text-align:right">Accuracy</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+            </tbody>
+        </table>
+
+        <p>NOAA determines accuracy by comparing each groundhog's prediction (shadow = six more weeks of winter; no shadow = early spring) against March temperature averages for the contiguous U.S. over the past 20 years.</p>
+
+        <p>Data source: <a href="https://www.noaa.gov/heritage/stories/grading-groundhogs">NOAA -Grading the Groundhogs</a></p>
+    </div>
+
+    <div class="footer">
+        <div class="content">
+            <p>Data from <a href="https://www.noaa.gov/heritage/stories/grading-groundhogs">NOAA's Grading the Groundhogs</a>.</p>
+        </div>
+    </div>
+
+    <script>
+        const data = [
+            { rank: 1, name: "Staten Island Chuck", species: "Groundhog", state: "NY", accuracy: 85 },
+            { rank: 2, name: "Lander Lil", species: "Prairie Dog Statue", state: "WY", accuracy: 80 },
+            { rank: 3, name: "General Beauregard Lee", species: "Groundhog", state: "GA", accuracy: 75 },
+            { rank: 4, name: "Concord Charlie", species: "Never Seen (presumed groundhog)", state: "WV", accuracy: 70 },
+            { rank: 5, name: "Gertie the Groundhog", species: "Groundhog", state: "IL", accuracy: 65 },
+            { rank: 5, name: "Jimmy the Groundhog", species: "Groundhog", state: "WI", accuracy: 65 },
+            { rank: 7, name: "Woodstock Willie", species: "Groundhog", state: "IL", accuracy: 60 },
+            { rank: 7, name: "Buckeye Chuck", species: "Groundhog", state: "OH", accuracy: 60 },
+            { rank: 7, name: "French Creek Freddie", species: "Groundhog", state: "WV", accuracy: 60 },
+            { rank: 10, name: "Octoraro Orphie", species: "Groundhog", state: "PA", accuracy: 57.89 },
+            { rank: 11, name: "Malverne Mel", species: "Groundhog", state: "NY", accuracy: 55 },
+            { rank: 11, name: "Dunkirk Dave", species: "Groundhog", state: "NY", accuracy: 55 },
+            { rank: 13, name: "Poor Richard", species: "Taxidermied Groundhog", state: "PA", accuracy: 50 },
+            { rank: 14, name: "Uni the Groundhog", species: "Taxidermied Groundhog", state: "PA", accuracy: 47.37 },
+            { rank: 15, name: "Holtsville Hal", species: "Groundhog", state: "NY", accuracy: 45 },
+            { rank: 16, name: "Schnogadahl Sammi", species: "Taxidermied Groundhog", state: "PA", accuracy: 38.89 },
+            { rank: 17, name: "Punxsutawney Phil", species: "Groundhog", state: "PA", accuracy: 35 },
+            { rank: 17, name: "Woody the Woodchuck", species: "Groundhog", state: "MI", accuracy: 35 },
+            { rank: 19, name: "Mojave Max", species: "Tortoise", state: "NV", accuracy: 20 }
+        ];
+
+        // Build table
+        const tbody = document.getElementById('table-body');
+        data.forEach(d => {
+            const isPhil = d.name === "Punxsutawney Phil";
+            const tr = document.createElement('tr');
+            if (isPhil) tr.style.background = '#fff3e0';
+            tr.innerHTML = `
+                <td class="rank">${d.rank}</td>
+                <td class="name">${d.name}</td>
+                <td class="species">${d.species}</td>
+                <td class="state">${d.state}</td>
+                <td class="accuracy" style="color: ${d.accuracy >= 60 ? '#5a8a2e' : d.accuracy >= 45 ? '#b89a2a' : '#c46a3a'}">${d.accuracy}%</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    </script>
+</body>
+
+</html>
